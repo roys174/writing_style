@@ -1,9 +1,11 @@
 # writing_style
 Code for classifying sentence according to their writing style.
 
-This is the code used for the style features classification in the following paper:: The Effect of Different Writing Tasks on Linguistic Style:
+This is the code used for the style features classification in the following paper:
 
-A Case Study of the ROC Story Cloze Task (Roy Schwartz, Maarten Sap, Yannis Konstas, Leila Zilles, Yejin Choi and Noah A. Smith, arXiv 2017, https://arxiv.org/abs/1702.01841)
+The Effect of Different Writing Tasks on Linguistic Style: A Case Study of the ROC Story Cloze Task 
+
+Roy Schwartz, Maarten Sap, Yannis Konstas, Leila Zilles, Yejin Choi and Noah A. Smith, arXiv 2017, https://arxiv.org/abs/1702.01841
 
 
 ### Requirements:

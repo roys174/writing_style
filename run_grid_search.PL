@@ -24,7 +24,7 @@ sub main(@) {
 		# Test $c on dev set
 		my ($exp1_result, $roc_result) = test_c($work_dir, $n_features, $c, 0);
 
-		printf("%f, %.03f, %.03f\n", $c, $exp1_result, $roc_result);
+		# printf("%f, %.03f, %.03f\n", $c, $exp1_result, $roc_result);
 	
 		# Tuning C on experiment 1 result. In case of tie, using ROC story results.
 		if ($exp1_result > $max) {

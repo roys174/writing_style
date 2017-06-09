@@ -5,7 +5,7 @@ This is the code used for the style features classification in the following pap
 
 The Effect of Different Writing Tasks on Linguistic Style: A Case Study of the ROC Story Cloze Task 
 
-Roy Schwartz, Maarten Sap, Yannis Konstas, Leila Zilles, Yejin Choi and Noah A. Smith, arXiv 2017, https://arxiv.org/abs/1702.01841
+Roy Schwartz, Maarten Sap, Yannis Konstas, Leila Zilles, Yejin Choi and Noah A. Smith, To appear in the proceedings of CoNLL 2017
 
 
 ### Requirements:

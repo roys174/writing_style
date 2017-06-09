@@ -47,7 +47,7 @@ def evaluate(test,labels,confidence = [], ids = None, gold = None, ofile = None)
     for i in range(len(labels)):
         n_correct += (labels[i]==test[i])
     
-    print n_correct,"/",len(labels),"=",n_correct*1./len(labels)
+    print n_correct,"/",len(labels),"=",round(n_correct*1./len(labels), 3)
 
     if (len(confidence)):        
         n_pairs_correct = 0

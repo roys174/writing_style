@@ -51,7 +51,7 @@ sub run_test($$$$) {
 	my $name = shift;
 	my $verbose = shift;
 
-	my $output = `python test.py ${work_dir}/${name}_features.dat ${work_dir}/model.bin`;
+	my $output = `python2 test.py ${work_dir}/${name}_features.dat ${work_dir}/model.bin`;
 	
 	my @elements = split("\n", $output);
 
@@ -74,7 +74,7 @@ sub test_c($$$$) {
 	my $c = shift;
 	my $verbose = shift;
 
-	my $t = `python train.py -i ${work_dir}/train_features.dat -n $n_features -o  ${work_dir}/model.bin -c $c`;
+		my $t = `python2 train.py -i ${work_dir}/train_features.dat -n $n_features -o  ${work_dir}/model.bin -c $c`;
 	
 	die if ($?);
 		

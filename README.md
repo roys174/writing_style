@@ -2,6 +2,7 @@
 Code for classifying sentence according to their writing style. This is the code used for the style features classification in the following paper:
 
 *The Effect of Different Writing Tasks on Linguistic Style: A Case Study of the ROC Story Cloze Task*
+
 *Roy Schwartz, Maarten Sap, Yannis Konstas, Li Zilles, Yejin Choi and Noah A. Smith*, In proceedings of CoNLL 2017 ([pdf](https://arxiv.org/abs/1702.01841), [bib](http://homes.cs.washington.edu/~roysch/papers/language_constraint/language_constraint.bib))
 
 ### Requirements:

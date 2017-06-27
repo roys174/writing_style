@@ -1,0 +1,3 @@
+[submodule "writing_style_lm"]
+	path = writing_style_lm
+	url = https://github.com/maarten1709/writing_style_lm

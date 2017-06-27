@@ -11,7 +11,7 @@ function gen_pair_file {
 	
 	# First, create two files (right and wrong samples)
 	$read_command $file | awk -F "	" '{if ($8 == 1) {print $6} else {print $7}}'   | perl -e '$a = join(" ", <STDIN>); $a =~ s/\b/ /g; $a =~ s/ +/ /g; $a =~ s/^[   ]//g; $a =~ s/ $//;print $a'  | sed 's/^ //' > $work_dir/right_${type}.dat
-	$read_command $file | awk -F "	" '{if ($8 == 2) {print $6} else {print $7}}'   | perl -e '$a = join(" ", <STDIN>); $a =~ s/\b/ /g; $a =~ s/ +/ /g; $a =~ s/^[   ]//g; $a =~ s/ $//;print $a'  | sed 's/^ //' > $work_dir/wrong_${type}.dat		
+	$read_command $file | awk -F "	" '{if ($8 == 2) {print $6} else {print $7}}'   | perl -e '$a = join(" ", <STDIN>); $a =~ s/\b/ /g; $a =~ s/ +/ /g; $a =~ s/^[   ]//g; $a =~ s/ $//;print $a'  | sed 's/^ //' > $work_dir/wrong_${type}.dat
 	
 	# PoS tag both files.
 	for j in right wrong; do
@@ -28,6 +28,8 @@ function pre_process {
 	local wdir=$1
 	local dev_file=$2
 	local test_file=$3
+	local lm_dev=$4
+	local lm_test=$5
 
 	perl gen_training_files.PL $dev_file $work_dir/dev ".9,.1,0" ".dat" 1
 
@@ -40,14 +42,35 @@ function pre_process {
 	for t in train test dev; do
 		gen_features.PL -i $work_dir/${t}_pairs.dat -f $work_dir/features_list.dat -o $work_dir/${t}_features.dat -len
 	done
+	
+	nl=`wc -l $work_dir/features_list.dat | awk '{print $1-2}'`
+	
+	if [ -n "$lm_test" ]; then
+		for type in train dev; do
+			mv $work_dir/${type}_features{,_orig}.dat
+			add_lm_features.PL $lm_dev $work_dir/${type}_features_orig.dat $dev_file $nl $work_dir/${type}_features.dat
+		done
+		type=test
+		mv $work_dir/${type}_features{,_orig}.dat
+		add_lm_features.PL $lm_test $work_dir/${type}_features_orig.dat $test_file $nl $work_dir/${type}_features.dat
 
-
-	nl=`wc -l $work_dir/features_list.dat | awk '{print $1}'`
+		for i in 1 2 3; do
+			let "nl++"
+			echo "##LM${i}##	$nl	-1	1" >> $work_dir/features_list.dat
+		done
+	fi
 }
 
 work_dir=$PWD
 if (( "$#" < 2 )); then
-	echo "Usage: $0 <dev_file> <test_file> <work_dir=$work_dir>"
+	echo "Usage: $0 <dev_file> <test_file> <work_dir=$work_dir> <language model scores (dev set)> <language model scores (test set)>"
+	echo ""
+	echo "-- dev and test files are ROC story corpus development and test sets"
+	echo ""
+	echo "-- work_dir is where temporary files are located during running" 
+	echo ""
+	echo "-- Last two arguments are optional: the language model scores of the development and test set (both need to be provided to consider them in the computation)."
+	echo "See README file for more details"
 	exit -1
 fi
 
@@ -56,10 +79,14 @@ test_file=$2
 
 if (( "$#" > 2 )); then
 	work_dir=$3
+	if (( "$#" > 4 )); then
+		lm_dev=$4
+		lm_test=$5
+	fi
 fi
 
 if [ ! -d $work_dir ]; then
 	mkdir $work_dir
 fi
 
-pre_process $work_dir $dev_file $test_file
+pre_process $work_dir $dev_file $test_file $lm_dev $lm_test

@@ -74,7 +74,7 @@ sub test_c($$$$) {
 	my $c = shift;
 	my $verbose = shift;
 
-		my $t = `python2 train.py -i ${work_dir}/train_features.dat -n $n_features -o  ${work_dir}/model.bin -c $c`;
+	my $t = `python2 train.py -i ${work_dir}/train_features.dat -n $n_features -o  ${work_dir}/model.bin -c $c`;
 	
 	die if ($?);
 		

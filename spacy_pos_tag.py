@@ -34,6 +34,9 @@ def main(args):
             tagged_sentence = []
 
             for tok in en_doc:
+                if tok.tag_ == "SP":
+                    continue
+                
                 tagged_sentence.append(str(tok)+"_"+tok.tag_)
 
             ofile.write(" ".join(tagged_sentence)+"\n")

@@ -28,7 +28,7 @@ sub main(@) {
 		"max_patt_len=i" 				=> \$max_patt_len,
 		"min_thr=i"						=> \$min_thr,
 		"char_ngrams=i"					=> \$char_ngrams,
-		"len+"							=> \$use_len,
+		"len+"							=> \$use_len
 	}, ["if=s","of=s","feature_file=s"]);
 	
 	$max_patt_len--;

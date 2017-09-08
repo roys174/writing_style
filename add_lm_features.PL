@@ -115,7 +115,7 @@ sub read_mapping_file($) {
 	while (my $line = $ifh->getline()) {
 		chomp($line);
 		
-		my @e = split("\t", $line);
+		my @e = split("[\t,]", $line);
 		my $id = shift(@e);
 		my $res = pop(@e);
 		my @sents = splice(@e, -2);

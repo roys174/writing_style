@@ -31,13 +31,27 @@ function pre_process {
 	local lm_dev=$4
 	local lm_test=$5
 
-	perl gen_training_files.PL $dev_file $work_dir/dev ".9,.1,0" ".dat" 1
+	if [ ${dev_file: -4} == ".csv" ]; then
+		new_file=`echo $dev_file | sed 's/.csv/.tsv/'`
+		
+		python csv2tsv.py $dev_file $new_file
+		dev_file=$new_file
+	fi
+	
+	perl gen_training_files.PL $new_file $work_dir/dev ".9,.1,0" ".dat" 1
 
 	for type in train dev; do
 		gen_pair_file $work_dir/dev_${type}.dat $type "cat"
 	done
 
-	gen_pair_file $test_file "test" "tail -n +2"
+	if [ ${test_file: -4} == ".csv" ]; then
+		new_file=`echo $test_file | sed 's/.csv/.tsv/'`
+		
+		python csv2tsv.py $test_file $new_file
+		test_file=$new_file
+	fi
+
+	gen_pair_file $new_file "test" "tail -n +2"
 
 	for t in train test dev; do
 		gen_features.PL -i $work_dir/${t}_pairs.dat -f $work_dir/features_list.dat -o $work_dir/${t}_features.dat -len

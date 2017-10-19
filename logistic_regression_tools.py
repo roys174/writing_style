@@ -3,81 +3,60 @@
 ### Utils for logistic regression.
 
 import numpy as np
+from scipy.sparse import lil_matrix
 import random
 import sys
 
 # Load features.
 def read_features(ifile, n_feats):
-    all_features = []
     labels = []
     
     with open(ifile) as ifh:
-        for line in ifh:
-            d = line.rstrip().split("\t")
+        lines = [l.rstrip() for l in ifh]
+    
+    all_features = lil_matrix((len(lines), n_feats), dtype=np.int8)
+    
+    # print("Created sparse matrix of size",len(lines), n_feats, all_features.shape)
+    
+    i = 0
+    for line in lines:
+        d = line.rstrip().split("\t")
         
-            if (len(d) < 3):
-                continue
+        if (len(d) < 3):
+            print("Bad line", line)
+            continue
         
-            labels.append(d[0])
+        labels.append(d[0])
         
-            features = d[2].split(" ")
+        features = d[2].split(" ")
+        data = dict()
         
-            local_features = [0 for i in range(n_feats)]
-
-            for feature in features:
-                [f,v] = feature.split(":")
+        for feature in features:
+            [f,v] = feature.split(":")
             
-                f = int(f)
+            f = int(f)
+
+            data[f] = v
                 
-                local_features[f] = float(v)
+            
         
-            all_features.append(local_features)
+        for k in sorted(data.keys()):
+            all_features[i, k] = float(data[k])
+        
+        i += 1
               
     return [all_features, labels]
     
 # Evaluate logistic regression
-def evaluate(test,labels,confidence = [], ids = None, gold = None, ofile = None):
+def evaluate(test,labels):
     n_correct = 0
-    
-    if (ofile != None):
-        ofh = FileTools.openWriteFile(ofile)
-        ofh.write("InputStoryid,AnswerRightEnding\n")
-        
     
     for i in range(len(labels)):
         n_correct += (labels[i]==test[i])
     
-    print n_correct,"/",len(labels),"=",round(n_correct*1./len(labels), 3)
-
-    if (len(confidence)):        
-        n_pairs_correct = 0
-
-        replace = {'2':'1', '1':'2'}
-        
-        # If model predicts the same label for both laternatives, take the one with the highest confidence.
-        for i in range(len(labels)/2):
-            if (test[2*i] == test[2*i+1]):
-                if (abs(confidence[2*i]) > abs(confidence[2*i+1])):
-                    test[2*i+1] = replace[test[2*i+1]]
-                else:
-                    test[2*i] = replace[test[2*i]]
-            
-            is_correct = (labels[2*i]==test[2*i])
-            
-            n_pairs_correct += is_correct
-            n_pairs_correct += (labels[2*i+1]==test[2*i+1])
-
-            if (ofile != None):
-                v = gold[i]
-                if (not is_correct):
-                    v = 3-v
-                    
-                ofh.write(ids[i]+","+str(v)+"\n")
+    v = round(n_correct*1./len(labels), 3)
     
-        # Print results.
-        print n_pairs_correct,"/",len(labels),"=",round(n_pairs_correct*1./len(labels), 3)
+    print n_correct,"/",len(labels),"=",str(v)
 
-    if (ofile != None):
-        ofh.write("\n")
-        ofh.close()
+    return v
 

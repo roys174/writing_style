@@ -11,24 +11,21 @@ use Term::ANSIColor;
 my %CW_TAGS = ("N" => undef, "V" => undef, "J" => undef, "R" => undef);
 
 sub main(@) {
-	my $min_thr = 5;
+	my $min_thr = 100;
 	my $max_patt_len = 5;
 	my $if;
 	my $feature_file;
 	my $of;
-	my $use_len;
-	my $char_ngrams=4;
+	my $char_ngrams=5;
 	my $dont_normalize;
 	
 	usage({
 		"if=s" => \$if,
-		"dont_normalize+"				=> \$dont_normalize,
 		"feature_file=s"				=> \$feature_file,
 		"of=s"							=> \$of,
 		"max_patt_len=i" 				=> \$max_patt_len,
 		"min_thr=i"						=> \$min_thr,
 		"char_ngrams=i"					=> \$char_ngrams,
-		"len+"							=> \$use_len
 	}, ["if=s","of=s","feature_file=s"]);
 	
 	$max_patt_len--;
@@ -38,6 +35,7 @@ sub main(@) {
 	
 	# File exists -- read features.
 	if (-e $feature_file) {
+		print "Reading $feature_file\n";
 		my $ifh = new IO::File($feature_file) or die "Can't open $feature_file for reading";
 		
 		$max_len = $ifh->getline();
@@ -52,6 +50,7 @@ sub main(@) {
 	# File doesn't exist -- generate features. 
 	} else {	
 		my %patts;
+		print "Reading $if\n";
 		my $ifh = new IO::File($if) or die "Can't open $if for reading";
 
 		my $is_first = 1;
@@ -62,11 +61,11 @@ sub main(@) {
 	
 			my @w = split(" ", $text);
 			
-			if (defined $use_len and @w > $max_len) {
+			if (@w > $max_len) {
 				$max_len = @w;
 			}
 
-			my $patts = get_patts(\@w, $max_patt_len, $char_ngrams,$dont_normalize);
+			my $patts = get_patts(\@w, $max_patt_len, $char_ngrams);
 
 			foreach my $patt (keys %$patts) {
 				unless (exists $patts{$patt}) {
@@ -96,7 +95,7 @@ sub main(@) {
 		$ofh->close();
 	}
 
-	my $n_feats = scalar(keys %saved)+defined($use_len);
+	my $n_feats = scalar(keys %saved)+1;
 	# print $n_feats." found\n";
 	
 	unless ($n_feats) {
@@ -121,19 +120,13 @@ sub main(@) {
 		foreach my $patt (keys %$patts) {
 			if (exists $saved{$patt}) {
 				$ts{$saved{$patt}->[0]} = $patts->{$patt};
-				unless (defined $dont_normalize) {
-					$ts{$saved{$patt}->[0]} /= ($saved{$patt}->[1]);
-				}	
+				$ts{$saved{$patt}->[0]} /= ($saved{$patt}->[1]);
 			}
 		}
 		
-		if ($use_len) {
-			$ts{$n_feats-1} = scalar(@w);
-			
-			unless (defined $dont_normalize) {
-				$ts{$n_feats-1} /= $max_len;
-			}
-		}
+		$ts{$n_feats-1} = scalar(@w);
+		
+		$ts{$n_feats-1} /= $max_len;
 		
 		$ofh->print("$label\t$text\t");		
 		
@@ -152,7 +145,6 @@ sub get_patts($$$$) {
 	unshift(@$w, "START_UNK");
 	my $max_patt_len = shift;
 	my $char_ngrams = shift;
-	my $dont_normalize = shift;
 	
 	my %patts;
 	

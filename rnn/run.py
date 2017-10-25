@@ -9,11 +9,12 @@ import argparse
 
 
 class Config(object):
-    def __init__(self, network, n_train_samples, n_validation_samples, n_epochs, batch_size, embedding_matrix,
+    def __init__(self, network, n_train_samples, n_validation_samples, n_test_samples, n_epochs, batch_size, embedding_matrix,
                  max_len, embedding_dim, train_x1, train_x2, logdir, contrastive, save_embedding, save_train_data,
                  calculate_validation):
         self.n_train_samples = n_train_samples
         self.n_validation_samples = n_validation_samples
+        self.n_test_samples = n_test_samples
         self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.embedding_matrix = embedding_matrix
@@ -33,12 +34,15 @@ class Config(object):
 
 class Run(object):
 
-    def run_network(self, train_csv, config):
+    def run_network(self, train_csv, valid_csv, test_csv, config):
         data = Data()
         display = Display()
         data.run(train_csv,
+                 valid_csv,
+                 test_csv,
                  n_train_samples=config.n_train_samples,
                  n_validation_samples=config.n_validation_samples,
+                 n_test_samples=config.n_test_samples,
                  embedding_matrix = config.embedding_matrix,
                  max_len = config.max_len,
                  embedding_dim=config.embedding_dim,
@@ -48,38 +52,41 @@ class Run(object):
                  save_embedding=config.save_embedding,
                  save_train_data=config.save_train_data)
         with tf.Graph().as_default() as graph:
-           config.model = config.model(data)
-           writer = TensorBoard(graph=graph, logdir=config.logdir).writer
-           output, loss, acc, train_summ, valid_summ, opt, merged = config.build_network(graph)
-           init = tf.global_variables_initializer()
-           with tf.Session(graph=graph) as sess:
-               sess.run(init)
-               for epoch in range(config.n_epochs):
-                 train_iter_ = data.batch_generator(config.batch_size)
-                 for batch_idx, batch in enumerate(tqdm(train_iter_)):
-                    train_x1_batch, train_x2_batch, train_labels_batch = batch
-                    _, batch_train_loss, batch_train_accuracy, batch_train_summary, _, summary = sess.run([output, loss, acc, train_summ, opt, merged],
-                                                                                    feed_dict={
-                                                                                                config.model.network.x1 : train_x1_batch,
-                                                                                                config.model.network.x2 : train_x2_batch,
-                                                                                                config.model.loss.labels : train_labels_batch,
-                                                                                                config.model.network.embedding_matrix : data.embedding_matrix
-                                                                                              })
-                    display.log_train(epoch, batch_idx, batch_train_loss, batch_train_accuracy)
-                    writer.add_summary(batch_train_summary, batch_idx)
+            config.model = config.model(data)
+            writer = TensorBoard(graph=graph, logdir=config.logdir).writer
+            output, loss, acc, train_summ, valid_summ, opt, merged = config.build_network(graph)
+            init = tf.global_variables_initializer()
+            with tf.Session(graph=graph) as sess:
+                sess.run(init)
+                for epoch in range(config.n_epochs):
+                    train_iter_ = data.batch_generator(config.batch_size)
+                    for batch_idx, batch in enumerate(tqdm(train_iter_)):
+                        train_x2_batch, train_labels_batch = batch
+                        _, batch_train_loss, batch_train_accuracy, batch_train_summary, _, summary = sess.run([output, loss, acc, train_summ, opt, merged],
+                                                                                        feed_dict={
+                                                                                                    config.model.network.x2: train_x2_batch,
+                                                                                                    config.model.loss.labels: train_labels_batch,
+                                                                                                    config.model.network.embedding_matrix: data.train_embedding_matrix
+                                                                                                  })
+                        display.log_train(epoch, batch_idx, batch_train_loss, batch_train_accuracy)
+                        writer.add_summary(batch_train_summary, batch_idx)
 
-                    if config.calculate_validation:
-                        if batch_idx % 100 == 0:
-                            batch_valid_accuracy, batch_valid_summary = sess.run([acc, valid_summ], feed_dict={
-                                                                                config.model.network.x1 : data.valid_x1,
-                                                                                config.model.network.x2 : data.valid_x2,
-                                                                                config.model.loss.labels : data.valid_labels,
-                                                                                config.model.network.embedding_matrix : data.embedding_matrix
-                                                                                })
-                            display.log_validation(epoch, batch_idx, batch_valid_accuracy)
-                            writer.add_summary(batch_valid_summary, batch_idx)
+                        if config.calculate_validation:
+                            if batch_idx % 100 == 0:
+                                batch_valid_accuracy, batch_valid_summary = sess.run([acc, valid_summ], feed_dict={
+                                                                                    config.model.network.x2: data.valid_x2,
+                                                                                    config.model.loss.labels: data.valid_labels,
+                                                                                    config.model.network.embedding_matrix: data.valid_embedding_matrix
+                                                                                    })
+                                display.log_validation(epoch, batch_idx, batch_valid_accuracy)
+                                writer.add_summary(batch_valid_summary, batch_idx)
                     writer.add_summary(summary, batch_idx)
-
+                test_accuracy = sess.run([acc], feed_dict={
+                                                    config.model.network.x2: data.test_x2,
+                                                    config.model.loss.labels: data.test_labels,
+                                                    config.model.network.embedding_matrix: data.test_embedding_matrix
+                                                    })
+                display.log_test(epoch, test_accuracy)
         display.done()
 
 if __name__ == '__main__':
@@ -90,8 +97,12 @@ if __name__ == '__main__':
                         help="Supply embedding matrix file")
     parser.add_argument('-s', '--save_embedding', action="store_true",
                         help="Do you want to save embedding to npy file?")
-    parser.add_argument('-d', '--master',  required=False,
-                        help="Supply master training dataset")
+    parser.add_argument('-d', '--train',  required=False,
+                        help="Supply training dataset")
+    parser.add_argument('-v', '--valid',  required=False,
+                        help="Supply validation dataset")
+    parser.add_argument('-a', '--test',  required=False,
+                        help="Supply test dataset")
     parser.add_argument('-x', '--trainx1', required=False,
                         help="Supply training data for q1")
     parser.add_argument('-y', '--trainx2', required=False,
@@ -102,7 +113,8 @@ if __name__ == '__main__':
 
     config = Config(network="biRNN_fc",
                     n_train_samples=500000,
-                    n_validation_samples=1000,
+                    n_validation_samples=8000,
+                    n_test_samples=8000,
                     n_epochs=10,
                     batch_size=100,
                     embedding_matrix = args.embedding,
@@ -110,12 +122,12 @@ if __name__ == '__main__':
                     embedding_dim=300,
                     train_x1 = args.trainx1,
                     train_x2 = args.trainx2,
-                    logdir="/tmp/quora_logs/biRNN_fc_1",
+                    logdir="/tmp/quora_logs/biRNN_fc_sentence_2_only_1",
                     contrastive=False,
                     save_embedding=args.save_embedding,
                     save_train_data=args.save_train,
                     calculate_validation=True)
-    Run().run_network(args.master, config)
+    Run().run_network(args.train, args.valid, args.test, config)
 
 
 

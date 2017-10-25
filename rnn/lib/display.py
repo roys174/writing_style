@@ -6,6 +6,8 @@ class Display(object):
         tqdm.write("EPOCH: %s, BATCH: %s, TRAIN LOSS: %s, TRAIN ACCURACY: %s" % (epoch, batch_idx, batch_train_loss, batch_train_accuracy))
     def log_validation(self, epoch, batch_idx, batch_valid_accuracy):
         tqdm.write("EPOCH: %s, BATCH: %s, VALIDATION ACCURACY: %s" % (epoch, batch_idx,  batch_valid_accuracy))
+    def log_test(self, epoch, test_accuracy):
+        tqdm.write("EPOCH: %s, TEST ACCURACY: %s" % (epoch, test_accuracy))
     def done(self):
         print("Done!")
 

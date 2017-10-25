@@ -46,7 +46,7 @@ def main():
 
         for C in tqdm(Cs):
             print ("Testing",C)
-            clf = linear_model.LogisticRegression(C=C)
+            clf = linear_model.LogisticRegression(C=C, verbose=True)
 
             clf.fit(train_features, train_labels)
 
@@ -73,8 +73,7 @@ def main():
         cv = int(options.n_folds)
         
         for C in tqdm(Cs):
-            clf = linear_model.LogisticRegression(C=C)
-            import ipdb; ipdb.set_trace()
+            clf = linear_model.LogisticRegression(C=C, verbose=True)
 
             scores = cross_val_score(clf, train_features, train_labels, cv=cv)
             v = np.mean(scores)

@@ -17,7 +17,7 @@ def main(args):
     ifile = args[1]
     ofile = args[2]
 
-    print "Reading "+ifile+" and writing "+ofile
+    print("Reading "+ifile+" and writing "+ofile)
     n_lines = 0
 
     with open(ifile) as ifile, open(ofile, "wb") as ofile: 
@@ -25,7 +25,7 @@ def main(args):
             n_lines = n_lines + 1
 
             if (n_lines % 1000 == 0):
-                print str(n_lines/1000)+"K    \r",
+                print (str(n_lines/1000)+"K    \r"),
                 sys.stdout.flush()
     
             uline = unicode(line.rstrip(), errors='ignore')

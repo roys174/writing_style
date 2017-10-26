@@ -48,6 +48,26 @@ class Layer(object):
                                                                 dtype=tf.float32)
         return outputs, output_state_fw, output_state_bw
 
+    def shortcut_biRNN(self, input, cell_type, network_dim):
+        xs = self.rnn_temporal_split(input)
+        # dropout = lambda y : tf.contrib.rnn.DropoutWrapper(y, output_keep_prob=0.5, seed=42)
+
+        fw_cells = {"LSTM": [lambda x : tf.contrib.rnn.BasicLSTMCell(x, reuse = None) for _ in range(n_layers)],
+                    "GRU" : [lambda x : tf.contrib.rnn.GRU(x, reuse = None) for _ in range(n_layers)]}[cell_type]
+        bw_cells = {"LSTM": [lambda x : tf.contrib.rnn.BasicLSTMCell(x, reuse = None) for _ in range(n_layers)],
+                    "GRU" : [lambda x : tf.contrib.rnn.GRU(x, reuse = None) for _ in range(n_layers)]}[cell_type]
+        # fw_cells = [dropout(fw_cell(network_dim)) for fw_cell in fw_cells]
+        # bw_cells = [dropout(bw_cell(network_dim)) for bw_cell in bw_cells]
+        fw_cells = [fw_cell(network_dim) for fw_cell in fw_cells]
+        bw_cells = [bw_cell(network_dim) for bw_cell in bw_cells]
+        fw_stack = tf.contrib.rnn.MultiRNNCell(fw_cells)
+        bw_stack = tf.contrib.rnn.MultiRNNCell(bw_cells)
+        outputs, fw_output_state, bw_output_state = tf.contrib.rnn.static_bidirectional_rnn(fw_stack,
+                                                                bw_stack,
+                                                                xs,
+                                                                dtype=tf.float32)
+        return outputs, fw_output_state, bw_output_state
+
     def rnn(self, input, cell_type, network_dim):
         xs = self.rnn_temporal_split(input)
         fw_cell_unit = {"GRU": lambda x: tf.contrib.rnn.GRU(x, reuse=None),
@@ -130,7 +150,7 @@ class Layer(object):
         W1 = tf.get_variable(name="W1_"+name, shape=[input_dim, hidden_dim], initializer=tf.contrib.layers.xavier_initializer())
         b1 = tf.get_variable(name="b1_"+name, shape=[hidden_dim], initializer=tf.contrib.layers.xavier_initializer())
         h1 = tf.nn.relu(tf.matmul(bn, W1) + b1)
-        d = tf.nn.dropout(h1, keep_prob = 0.5, seed = 42)
+        d = tf.nn.dropout(h1, keep_prob = 0.1, seed = 42)
         W2 = tf.get_variable(name="W2_"+name, shape=[hidden_dim, output_dim], initializer=tf.contrib.layers.xavier_initializer())
         b2 = tf.get_variable(name="b2_"+name, shape=[output_dim], initializer=tf.contrib.layers.xavier_initializer())
         out = tf.matmul(d, W2) + b2
@@ -141,11 +161,17 @@ class Network(Layer):
     def __init__(self, graph, max_len, embedding_dim):
         super(Network, self).__init__(graph, max_len, embedding_dim)
 
-    def biRNN_fc_network(self):
-        import ipdb; ipdb.set_trace()
+    def stacked_biRNN_fc_maxpool_network(self):
         embed = self.embed(self.x2)
         with tf.variable_scope("output", reuse=None) as scope:
-            enc_repr, _ , _ = self.biRNN(embed, "LSTM", network_dim=150)
-            # attention_output, alphas = self.attention(enc_repr, 50, return_alphas=True)
-            output = self.dense_unit(enc_repr[-1], "feedforward", input_dim=300, hidden_dim=25, output_dim=3)
+            enc_repr, _ , _ = self.stacked_biRNN(embed, "LSTM", n_layers=3, network_dim=512)
+            max_pool = tf.reduce_max(enc_repr, axis=0)
+            output = self.dense_unit(max_pool, "feedforward", input_dim=1024, hidden_dim=512, output_dim=3)
+        return output
+
+    def biRNN_fc_network(self):
+        embed = self.embed(self.x2)
+        with tf.variable_scope("output", reuse=None) as scope:
+            enc_repr, _ , _ = self.biRNN(embed, "LSTM", network_dim=512)
+            output = self.dense_unit(enc_repr[-1], "feedforward", input_dim=1024, hidden_dim=512, output_dim=3)
         return output

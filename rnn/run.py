@@ -30,6 +30,7 @@ class Config(object):
         self.model = lambda x : BuildNetwork(x, max_len, embedding_dim)
         self.build_network = {
                         "biRNN_fc": lambda y: self.model.build_biRNN_fc_network(y),
+                        "biRNN_fc_maxpool": lambda y: self.model.build_stacked_biRNN_fc_maxpool_network(y),
                     }[network]
 
 class Run(object):
@@ -111,7 +112,7 @@ if __name__ == '__main__':
                         help="Do you want to save preprocessed training data to npy file?")
     args = parser.parse_args()
 
-    config = Config(network="biRNN_fc",
+    config = Config(network="biRNN_fc_maxpool",
                     n_train_samples=500000,
                     n_validation_samples=8000,
                     n_test_samples=8000,
@@ -122,7 +123,7 @@ if __name__ == '__main__':
                     embedding_dim=300,
                     train_x1 = args.trainx1,
                     train_x2 = args.trainx2,
-                    logdir="/tmp/quora_logs/biRNN_fc_sentence_2_only_1",
+                    logdir="/tmp/quora_logs/stacked_biRNN_fc_sentence_2_only_1",
                     contrastive=False,
                     save_embedding=args.save_embedding,
                     save_train_data=args.save_train,

@@ -1,7 +1,8 @@
-#!/usr/bin/env perl -w
+#!/usr/bin/env perl
 
 ### Add language model's features to style features.
 
+use warnings;
 use strict;
 use IO::File;
 

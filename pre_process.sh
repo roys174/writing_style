@@ -8,10 +8,13 @@ function gen_pair_file {
 	local file=$1
 	local type=$2
 	local read_command=$3
+
+	right_of=$work_dir/right_${type}.dat 
+	wrong_of=$work_dir/wrong_${type}.dat 
 	
 	# First, create two files (right and wrong samples)
-	$read_command $file | awk -F "	" '{if ($8 == 1) {print $6} else {print $7}}'   | perl -e '$a = join(" ", <STDIN>); $a =~ s/\b/ /g; $a =~ s/ +/ /g; $a =~ s/^[   ]//g; $a =~ s/ $//;print $a'  | sed 's/^ //' > $work_dir/right_${type}.dat
-	$read_command $file | awk -F "	" '{if ($8 == 2) {print $6} else {print $7}}'   | perl -e '$a = join(" ", <STDIN>); $a =~ s/\b/ /g; $a =~ s/ +/ /g; $a =~ s/^[   ]//g; $a =~ s/ $//;print $a'  | sed 's/^ //' > $work_dir/wrong_${type}.dat
+	$read_command $file | awk -F "	" '{if ($8 == 1) {print $6} else {print $7}}'   | perl -e '$a = join(" ", <STDIN>); $a =~ s/\b/ /g; $a =~ s/ +/ /g; $a =~ s/^[   ]//g; $a =~ s/ $//;print $a'  | sed 's/^ //' > $right_of
+	$read_command $file | awk -F "	" '{if ($8 == 2) {print $6} else {print $7}}'   | perl -e '$a = join(" ", <STDIN>); $a =~ s/\b/ /g; $a =~ s/ +/ /g; $a =~ s/^[   ]//g; $a =~ s/ $//;print $a'  | sed 's/^ //' > $wrong_of
 	
 	# PoS tag both files.
 	for j in right wrong; do
@@ -37,8 +40,8 @@ function pre_process {
 		python csv2tsv.py $dev_file $new_file
 		dev_file=$new_file
 	fi
-	
-	perl gen_training_files.PL $new_file $work_dir/dev ".9,.1,0" ".dat" 1
+
+	perl gen_training_files.PL $dev_file $work_dir/dev ".9,.1,0" ".dat" 1
 
 	for type in train dev; do
 		gen_pair_file $work_dir/dev_${type}.dat $type "cat"
@@ -51,7 +54,7 @@ function pre_process {
 		test_file=$new_file
 	fi
 
-	gen_pair_file $new_file "test" "tail -n +2"
+	gen_pair_file $test_file "test" "tail -n +2"
 
 	for t in train test dev; do
 		gen_features.PL -i $work_dir/${t}_pairs.dat -f $work_dir/features_list.dat -o $work_dir/${t}_features.dat -len

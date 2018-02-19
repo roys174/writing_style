@@ -13,7 +13,7 @@ Code for classifying sentence according to their writing style. This is the code
 
 ### Running:
 
-    1. pre_process.sh <ROC story dev file> <ROC story test file> <work directory = $PWD> <language model scores (dev set)> <language model scores (test set)>
+    1. pre_process.sh <ROC story dev file> <ROC story test file> <work directory = $PWD> <language model scores (dev set), optional> <language model scores (test set), optional>
 	
 -- This script generates files needed for training and testing. The files are stored in the input working directory.
 

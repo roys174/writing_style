@@ -20,7 +20,7 @@ sub main(@) {
 	my $char_ngrams=4;
 	my $dont_normalize;
 	
-	usage({
+	usage("Generate ROC story features to be fed to a logistic regression classifier", {
 		"if=s" => \$if,
 		"dont_normalize+"				=> \$dont_normalize,
 		"feature_file=s"				=> \$feature_file,
@@ -29,7 +29,17 @@ sub main(@) {
 		"min_thr=i"						=> \$min_thr,
 		"char_ngrams=i"					=> \$char_ngrams,
 		"len+"							=> \$use_len
-	}, ["if=s","of=s","feature_file=s"]);
+	}, { "if=s" => "Input file. Each line contain tab-separated label and text. E.g., '1	Some text'",
+		"dont_normalize+" => "Don't normalize feature values",
+                "feature_file=s"                                => "Feature file. If this file doesn't exist, the script creates it and puts all the computed features from the input file (typically done with the training file). Otherwise, it reads it and uses these features",          
+                "of=s"                                                  => "Output file", 
+                "max_patt_len=i"                                => "Maximum pattern length",
+                "min_thr=i"                                             => "Minimum frequency threshold for feature to be included",
+                "char_ngrams=i"                                 => "Length of character n-gram features",
+                "len+"                                                  => "Use legnth as a feature"
+}, ["if=s","of=s","feature_file=s"]);
+
+	
 	
 	$max_patt_len--;
 	my %saved;
@@ -178,8 +188,10 @@ sub get_patts($$$$) {
 }
 
 
-sub usage($$) {
+sub usage($$$$) {
+	my $general_message = shift;
         my $options = shift;
+	my $descriptions = shift;
         my $mandatory = shift;
         my $help;
 
@@ -202,7 +214,7 @@ sub usage($$) {
          
           
         if (not $result or $help) {
-                getopt_gen_message($options, $mandatory);
+                getopt_gen_message($general_message, $options, $descriptions, $mandatory);
         }
         
         foreach my $k (@$mandatory) {
@@ -216,29 +228,37 @@ sub usage($$) {
                         }
 
                         unless ($found) {
-                                getopt_gen_message($options, $mandatory);
+                		getopt_gen_message($general_message, $options, $descriptions, $mandatory);
                         }
                 } elsif (not defined ${$options->{$k}}) {
-                        getopt_gen_message($options, $mandatory);
+                	getopt_gen_message($general_message, $options, $descriptions, $mandatory);
                 }
         }
 }
 
-sub getopt_gen_message($$) {
+sub getopt_gen_message($$$$) {
+	my $general_message = shift;
         my $options = shift;
+	my $descriptions = shift;
         my $mandatory = shift;
         
-        print $0."\n";
+        print $0."\n"; 
+
+	print "$general_message\n\n";
         
         foreach my $k (sort {$a cmp $b} keys %$options) {
                 print "-$k";
                 if (defined ${$options->{$k}}) {
-                        print " (default '";
+                        print " (default ";
                         print color 'blue';
                         print ${$options->{$k}};
                         print color 'reset';
-                        print "')";
+                        print ")";
                 }
+
+		if (defined $descriptions->{$k}) {
+			print ": ".$descriptions->{$k};
+		}
                 
                 foreach my $field (@$mandatory) {
                         if ($field eq $k and not defined ${$options->{$k}}) {

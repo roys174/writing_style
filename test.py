@@ -11,7 +11,11 @@ def main():
     gold=None
     out_file = None
     if (len(sys.argv) < 3):
-        print "Usage:",sys.argv[0],"<if> <model if> <is ranking> <mapping file> <out file>" 
+        print "Usage:",sys.argv[0],"<if> <model if> <mapping file> <out file>\n"  \
+        		"if -- test input file\n"  \
+			"model if -- model input file\n" \
+			"mapping file -- sentence_id to gold mapping file (optional, in case out file is provided)\n" \
+			"out file -- prediction output file (optional)" 
         return -1
     elif (len(sys.argv) > 3):
         mapping_file = sys.argv[3]

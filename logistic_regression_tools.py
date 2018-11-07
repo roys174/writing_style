@@ -40,7 +40,7 @@ def evaluate(test,labels,confidence = [], ids = None, gold = None, ofile = None)
     n_correct = 0
     
     if (ofile != None):
-        ofh = FileTools.openWriteFile(ofile)
+        ofh = open(ofile, 'w')
         ofh.write("InputStoryid,AnswerRightEnding\n")
         
     
